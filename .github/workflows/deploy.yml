@@ -28,11 +28,11 @@ jobs:
           node-version: 18
 
       - name: Install dependencies
-        working-directory: fastapi-shoppingcart-fixed/frontend
+        working-directory: frontend
         run: npm install
 
       - name: Build
-        working-directory: fastapi-shoppingcart-fixed/frontend
+        working-directory: frontend
         env:
           REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
           PUBLIC_URL: /fastapi-shoppingcart
@@ -41,7 +41,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: fastapi-shoppingcart-fixed/frontend/build
+          path: frontend/build
 
   deploy:
     name: Deploy to Pages
@@ -68,9 +68,9 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        working-directory: fastapi-shoppingcart-fixed
+        
         run: pip install -r requirements.txt
 
       - name: Check syntax
-        working-directory: fastapi-shoppingcart-fixed
+        
         run: python -m py_compile main.py database.py database_models.py models.py && echo "All files OK"
