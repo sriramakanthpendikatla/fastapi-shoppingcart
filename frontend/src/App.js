@@ -10,7 +10,6 @@ const api = axios.create({
 function App() {
   const [products, setProducts] = useState([]);
   const [form, setForm] = useState({
-    id: "",
     name: "",
     description: "",
     price: "",
@@ -24,30 +23,24 @@ function App() {
   const [sortField, setSortField] = useState("id");
   const [sortDirection, setSortDirection] = useState("asc");
 
-  // Auto-dismiss messages after 5 seconds
   useEffect(() => {
     if (message) {
-      const timer = setTimeout(() => {
-        setMessage("");
-      }, 5000);
+      const timer = setTimeout(() => setMessage(""), 5000);
       return () => clearTimeout(timer);
     }
   }, [message]);
 
   useEffect(() => {
     if (error) {
-      const timer = setTimeout(() => {
-        setError("");
-      }, 5000);
+      const timer = setTimeout(() => setError(""), 5000);
       return () => clearTimeout(timer);
     }
   }, [error]);
 
-  // Fetch all products
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/products/");
+      const res = await api.get("/products");
       setProducts(res.data);
       setError("");
     } catch (err) {
@@ -57,22 +50,9 @@ function App() {
   };
 
   useEffect(() => {
-    // Inline initial fetch to avoid referencing external deps
-    const run = async () => {
-      setLoading(true);
-      try {
-        const res = await api.get("/products/");
-        setProducts(res.data);
-        setError("");
-      } catch (err) {
-        setError("Failed to fetch products");
-      }
-      setLoading(false);
-    };
-    run();
+    fetchProducts();
   }, []);
 
-  // Handle sorting
   const handleSort = (field) => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -82,74 +62,57 @@ function App() {
     }
   };
 
-  // Derived list with filter and sorting
   const filteredProducts = useMemo(() => {
     let filtered = products;
-    
-    // Apply filter
     const q = filter.trim().toLowerCase();
     if (q) {
       filtered = products.filter((p) =>
-        String(p.id).includes(q) ||
         p.name?.toLowerCase().includes(q) ||
         p.description?.toLowerCase().includes(q)
       );
     }
-    
-    // Apply sorting
-    return filtered.sort((a, b) => {
+    return [...filtered].sort((a, b) => {
       let aVal = a[sortField];
       let bVal = b[sortField];
-      
-      // Handle numeric fields
       if (sortField === "id" || sortField === "price" || sortField === "quantity") {
         aVal = Number(aVal);
         bVal = Number(bVal);
       } else {
-        // Handle string fields
         aVal = String(aVal).toLowerCase();
         bVal = String(bVal).toLowerCase();
       }
-      
       if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
       if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
       return 0;
     });
   }, [products, filter, sortField, sortDirection]);
 
-  // Handle form input
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // Reset form
   const resetForm = () => {
-    setForm({ id: "", name: "", description: "", price: "", quantity: "" });
+    setForm({ name: "", description: "", price: "", quantity: "" });
     setEditId(null);
   };
 
-  // Create or update product
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
     setError("");
     try {
+      const payload = {
+        name: form.name,
+        description: form.description,
+        price: Number(form.price),
+        quantity: Number(form.quantity),
+      };
       if (editId) {
-        await api.put(`/products/${editId}`, {
-          ...form,
-          id: Number(form.id),
-          price: Number(form.price),
-          quantity: Number(form.quantity),
-        });
+        await api.put(`/products/${editId}`, payload);
         setMessage("Product updated successfully");
       } else {
-        await api.post("/products/", {
-          ...form,
-          id: Number(form.id),
-          price: Number(form.price),
-          quantity: Number(form.quantity),
-        });
+        await api.post("/products", payload);
         setMessage("Product created successfully");
       }
       resetForm();
@@ -160,10 +123,8 @@ function App() {
     setLoading(false);
   };
 
-  // Edit product
   const handleEdit = (product) => {
     setForm({
-      id: product.id,
       name: product.name,
       description: product.description,
       price: product.price,
@@ -174,7 +135,6 @@ function App() {
     setError("");
   };
 
-  // Delete product
   const handleDelete = async (id) => {
     const ok = window.confirm("Delete this product?");
     if (!ok) return;
@@ -213,11 +173,11 @@ function App() {
 
       <div className="container">
         <div className="stats">
-            <div className="chip">Catalog items: {products.length}</div>
-            <div className="search">
-              <input
-                type="text"
-                placeholder="Search items, names or descriptions..."
+          <div className="chip">Catalog items: {products.length}</div>
+          <div className="search">
+            <input
+              type="text"
+              placeholder="Search names or descriptions..."
               onChange={(e) => setFilter(e.target.value)}
             />
           </div>
@@ -227,15 +187,6 @@ function App() {
           <div className="card form-card">
             <h2>{editId ? "Edit Product" : "Add Product"}</h2>
             <form onSubmit={handleSubmit} className="product-form">
-              <input
-                type="number"
-                name="id"
-                placeholder="ID"
-                value={form.id}
-                onChange={handleChange}
-                required
-                disabled={!!editId}
-              />
               <input
                 type="text"
                 name="name"
@@ -306,28 +257,23 @@ function App() {
                 <table className="product-table">
                   <thead>
                     <tr>
-                      <th 
-                        className={`sortable ${sortField === 'id' ? `sort-${sortDirection}` : ''}`}
-                        onClick={() => handleSort('id')}
-                      >
-                        ID
-                      </th>
-                      <th 
-                        className={`sortable ${sortField === 'name' ? `sort-${sortDirection}` : ''}`}
-                        onClick={() => handleSort('name')}
+                      <th>#</th>
+                      <th
+                        className={`sortable ${sortField === "name" ? `sort-${sortDirection}` : ""}`}
+                        onClick={() => handleSort("name")}
                       >
                         Name
                       </th>
                       <th>Description</th>
-                      <th 
-                        className={`sortable ${sortField === 'price' ? `sort-${sortDirection}` : ''}`}
-                        onClick={() => handleSort('price')}
+                      <th
+                        className={`sortable ${sortField === "price" ? `sort-${sortDirection}` : ""}`}
+                        onClick={() => handleSort("price")}
                       >
                         Price
                       </th>
-                      <th 
-                        className={`sortable ${sortField === 'quantity' ? `sort-${sortDirection}` : ''}`}
-                        onClick={() => handleSort('quantity')}
+                      <th
+                        className={`sortable ${sortField === "quantity" ? `sort-${sortDirection}` : ""}`}
+                        onClick={() => handleSort("quantity")}
                       >
                         Quantity
                       </th>
@@ -335,9 +281,9 @@ function App() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredProducts.map((p) => (
+                    {filteredProducts.map((p, index) => (
                       <tr key={p.id}>
-                        <td>{p.id}</td>
+                        <td>{index + 1}</td>
                         <td className="name-cell">{p.name}</td>
                         <td className="desc-cell" title={p.description}>{p.description}</td>
                         <td className="price-cell">${currency(p.price)}</td>
