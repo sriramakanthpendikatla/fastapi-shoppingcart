@@ -1,0 +1,87 @@
+name: Deploy Frontend to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:   # allows manual trigger from GitHub UI
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  # ── Job 1: Build React app ──────────────────────────────────────────────
+  build:
+    name: Build React
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build
+        working-directory: frontend
+        env:
+          # On GitHub Pages the app is served at /fastapi-shoppingcart/
+          # Point API at your deployed backend (update this URL after you deploy backend)
+          REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL || 'http://localhost:8000' }}
+          PUBLIC_URL: /fastapi-shoppingcart
+        run: npm run build
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend/build
+
+  # ── Job 2: Deploy to GitHub Pages ──────────────────────────────────────
+  deploy:
+    name: Deploy to Pages
+    needs: build
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  # ── Job 3: Lint & test backend ─────────────────────────────────────────
+  backend-check:
+    name: Backend Lint & Import Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Check imports compile cleanly
+        run: python -c "import main; print('✅ main.py imports OK')"
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
