@@ -6,7 +6,7 @@ A full-stack product inventory management system built with **FastAPI** + **Post
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi)
 ![React](https://img.shields.io/badge/React-18-61DAFB?logo=react)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql)
-![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)  
 ![Deploy](https://img.shields.io/badge/Deploy-Live-brightgreen)
   
 ---  
