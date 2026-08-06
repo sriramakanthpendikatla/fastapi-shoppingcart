@@ -11,7 +11,7 @@ A full-stack product inventory management system built with **FastAPI** + **Post
 
 ---
   
-## 🌐 Live Demo
+## 🌐 Live Demo  
 
 | Service | URL |
 |---|---|
