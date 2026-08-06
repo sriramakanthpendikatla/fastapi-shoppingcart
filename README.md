@@ -10,7 +10,7 @@ A full-stack product inventory management system built with **FastAPI** + **Post
 ![Deploy](https://img.shields.io/badge/Deploy-Live-brightgreen)
 
 ---
-
+  
 ## 🌐 Live Demo
 
 | Service | URL |
